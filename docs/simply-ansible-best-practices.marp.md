@@ -1,9 +1,9 @@
 <!-- Written with Marp: https://yhatt.github.io/marp/ -->
 <!-- $theme: default -->
 
-# Simply Ansible
+# Simply Ansible: Best Practices
 
-> Getting started with Ansible best practices
+> Writing Ansible scripts that don't completely suck
 
 <small>David M. Lee, II
 [@leedm777](https://github.com/leedm777) GitHub
@@ -12,265 +12,20 @@
 
 ---
 
-# `new Ansible()`
+# Fair warning: I might be wrong
 
-> Ansible is an IT automation tool. It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates.
-
----
-
-# Ansible basics
-
- * Ansible uses [YAML](http://www.yaml.org/spec/1.2/spec.html) for pretty much everything
-   * Except for the occasional [INI format](https://docs.python.org/2/library/configparser.html)
- * Templates are written in [Jinja2](http://jinja.pocoo.org/docs/dev/) template language
-   * Can show up in `.yml` files. Much fun!
- * Requires Python 2.x, on both control machine and managed nodes
-   * No agent required on managed nodes
-   * Modules may require certain libraries/apps to be installed
+![no-idea](./images/no-idea.jpg)
 
 ---
 
-# Using Ansible
+# Nothing better than an example
 
-![usage](./images/usage.jpg)
-
----
-
-## `ansible` - ad hoc commands
-
-Handy, but use sparingly. Changes to systems should be done through playbooks.
+I have a [cookiecutter](https://github.com/audreyr/cookiecutter) template which sets up a good starting project demonstrating these practices.
 
 ```bash
-$ ansible all \
->  --module-name command \
->  --args "uname -a"
-services | SUCCESS | rc=0 >>
-Linux services 3.2.0-107-virtual #148-Ubuntu SMP Mon Jul 18 21:47:32 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux
+$ pip install cookiecutter
 
-mariadb | SUCCESS | rc=0 >>
-Linux mariadb 3.2.0-107-virtual #148-Ubuntu SMP Mon Jul 18 21:47:32 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux
-
-pdns | SUCCESS | rc=0 >>
-Linux pdns 3.10.0-327.22.2.el7.x86_64 #1 SMP Thu Jun 23 17:05:11 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux
-```
-
----
-
-## `ansible-playbook` - what you really want
-
-The `ansible-playbook` command executes the tasks specified in the playbook, in order, against the managed hosts.
-
-```bash
-$ ansible-playbook site.yml
-PLAY [Do the thing] ************************************************************
-
-TASK [setup] *******************************************************************
-ok: [mariadb]
-ok: [services]
-ok: [pdns]
-
-TASK [The thing] ***************************************************************
-ok: [mariadb]
-ok: [services]
-skipped: [pdns]
-```
-
----
-
-# Anatomy of an Ansible project
-
-![anatomy](images/anatomy.jpg)
-
----
-
-# Inventory
-
-## The list of managed hosts
-
-Can be static (in a `.ini` file) or dynamic (results of a `.py` inventory script).
-
-```
-# ./inventory/vagrant.ini
-[services]
-services ansible_host=192.168.98.100
-
-[mariadb]
-mariadb ansible_host=192.168.98.200
-```
-
----
-
-# Variables
-
- * Values that may vary per system
-   * About a zillion different places to specify vars
-   * Please don't use _all_ of them
-
-```yaml
-# ./group_vars/all/main.yml
----
-# default to direct mail delivery.
-# if you have a relay, set it here.
-smtp_relay_host: ''
-
-# Use for NODE_ENV, RAILS_ENV, RACK_ENV, etc.
-app_env: development
-```
-
----
-
-# Secret Variables: Ansible Vault
-
-The `ansible-vault` command can be used to manage encrypted files. Put any secrets for a given environment in a `vault.yml` file in that environment's `group_vars`.
-
-```bash
-# create a vault
-$ ansible-vault create group_vars/${ENV}/vault.yml
-# edit a vault
-$ ansible-vault edit group_vars/${ENV}/vault.yml
-```
-
----
-
-# Playbook
-
-A playbook is a list of plays, which are executed sequentially, in order.
-
-```yaml
-# ./site.yml
----
-- name: Some play
-  hosts: some-hosts
-  roles:
-   - some-role
-
-- name: Some other play
-  # ...
-```
-
----
-
-# Play
-
-A play is a list of roles, which are executed sequentially, in order.
-
-```yaml
-- name: Some play
-  hosts: some-hosts
-  roles:
-   - some-role
-   - some-other-role
-```
-
----
-
-# Role
-
-A role is a list of tasks, which are executed sequentially, in order. Plus some other stuff.
-
-```bash
-site.yml
-roles/
-   some-role/
-     tasks/
-       main.yml # tasks go in here
-     vars/
-       main.yml # role-specific vars go in here
-     handlers/
-       main.yml # tasks that are triggered optionally
-                #   i.e. service restarts
-     files/
-       ...      # content for copy/script tasks
-     templates/
-       ...      # content for template tasks
-                #   always append .j2 to filenames
-```
-
----
-
-# Parameterized Role
-
-A role may be parameterized, meaning that it expects certain variables to be set.
-
-```yaml
-- role: rvm_io.rvm1-ruby
-  rvm1_autolib_mode: 4 # automatically install deps
-  rvm1_rubies: ['ruby-2.3.1', 'ruby-2.2.5']
-```
-
----
-
-# Sharing roles
-
- * Common roles can be shared via [Ansible galaxy](https://galaxy.ansible.com/) or [git repo](http://docs.ansible.com/ansible/galaxy.html#installing-multiple-roles-from-multiple-files)
- * BUT... they tend to be very small, poorly versioned, and so poorly maintained, this is rarely useful
-   * Don't use a role unless it has tagged versions
-   * AND it looks like someone loves and cares for it
-   * Otherwise, learn what you can from it and write your own
-
----
-
-# Task
-
-A task specifies a module and the parameters to invoke it with. The task is executed in parallel on every matching host for that play.
-
-```yaml
-- name: perform an action
-  # args can be name=value
-  action: some_param=some-value
-
-- name: perform another action
-  # or args can be an object
-  action:
-    some_param: some-value
-```
-
----
-
-# Block
-
-A block can all you to more easily apply settings to a group of tasks. Also adds `rescue` blocks for error handling. New in Ansible 2.x.
-
-```yaml
-- when: some_var == 'some-val'
-  block:
-   - name: conditionally do a thing
-     action: some_param=some-value
-   - name: conditionally do another thing
-     another_action: some_param=some-value
-```
-
----
-
-# Template
-
-You can use [Jinja2 syntax](http://jinja.pocoo.org/docs/dev/templates/) in `.j2` template files, or in task definitions.
-
-```yaml
-- name: perform an action
-  action: some_param='{{ some_var }}'
-  #                  ^              ^
-  #                  in YAML, quotes are
-  #                  usually necessary to
-  #                  avoid yaml/j2 confusion
-```
-
----
-
-# Tags and limits
-
-[Tags](http://docs.ansible.com/ansible/playbooks_tags.html) specify which tasks to run. [Limits](http://docs.ansible.com/ansible/intro_patterns.html) specifies which hosts to run those tasks on.
-
-```bash
-# run entire playbook on single machine
-$ ansible-playbook site.yml --limit some-new-machine
-
-# run everything tagged with sontaran on all machines
-$ ansible-playbook site.yml --tags sontaran
-
-# run sil and ood on the webservers not in San Diego
-$ ansible-playbook site.yml --tags sil,ood \
->   --limit webservers:!san-diego
+$ cookiecutter gh:building5/simply-ansible
 ```
 
 ---
@@ -283,7 +38,7 @@ $ ansible-playbook site.yml --tags sil,ood \
 
 ## Put tasks in roles, not the playbook
 
-While you can list tasks directly in a play, you're usually better off putting the task off in a role.
+While you can list tasks directly in a play, you're usually better off putting the task in a role.
 
 ```yaml
 # ./site.yml
@@ -420,6 +175,44 @@ roles:
 
 ---
 
+## Don't bother with `meta`
+
+Meta declares dependencies between roles, which seems nice.
+
+But...
+ * Dependencies are executed in every play they are refernced from
+   * Which means they probably get executed multiple times
+ * Plays/roles execute in order, so you can just put the dependency earlier in the list
+
+```yaml
+# ./role/rani/meta/main.yml
+dependencies: [{ role: apt-get-update }] # Bad!
+               # can cause apt-get-update to run
+               # multiple times!
+
+# ./site.yml
+- roles:
+   - apt-get-update # Much Better!
+   - rani
+```
+
+---
+
+## Prefer `defaults` to `vars`
+
+Roles give you two places to define variables. They only differ in precedence, and `defaults` (lowest precedence of any variable) is the least confusing.
+
+```bash
+roles/
+   some-role/
+     defaults/
+       main.yml # Good play for role's variables
+     vars/
+       main.yml # Confusing place for role's variables
+```
+
+---
+
 ## Don't put tons of tags on a task
 
 If you find yourself putting lots of tags on a task, you're probably doing it wrong. A tag should be there for a reason.
@@ -455,7 +248,7 @@ group_vars/
     vault.yml   #   safe place for secrets
 roles/
    kandy-man/
-     vars/
+     defaults/
        main.yml # specific vars for the role
                 # version numbers, SHA hashes, etc.
 ```
@@ -591,14 +384,12 @@ Ansible allows you to split logic between playbooks and roles, but that just mak
 - # ...
   roles:
    - role: epel
-     when: ansible_distribution == 'CentOS' # bad
+     when: ansible_distribution == 'CentOS' # Bad!
 
 # ./roles/epel/tasks/main.yml
-- when: ansible_distribution == 'CentOS' # Good!
-  block:
-   - name: yum install epel-...
+- name: yum install epel-...
+  when: ansible_distribution == 'CentOS' # Good!
 ```
-
 ---
 
 ## Test your playbooks
@@ -618,6 +409,16 @@ test: virtualenv galaxy
 
 ---
 
+## Follow good programming principles
+
+ * Use descriptive names
+ * Keep playbooks in source control
+ * Peer review changes before going live
+ * Use continuous deployment/continous delivery/ChatOps
+ * Testing!
+
+---
+
 # Questions
 
 ![question](images/question.jpg)
@@ -627,3 +428,8 @@ test: virtualenv galaxy
 # Thanks!
 
 ![hugs](images/hugs.jpg)
+
+<small>David M. Lee, II
+[@leedm777](https://github.com/leedm777) GitHub
+[@leedm777](https://twitter.com/leedm777) Twitter
+[leedm777@yahoo.com](mailto:leedm777@yahoo.com)</small>
