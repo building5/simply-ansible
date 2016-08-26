@@ -1,0 +1,24 @@
+---
+- tags: mariadb-client
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      block:
+        - name: apt-get install libmariadbclient-dev mariadb-client
+          apt: name={{ item }}
+          with_items:
+            - libmariadbclient-dev
+            - mariadb-client
+
+        - name: cp client.cnf /etc/mysql/conf.d
+          copy: src=client.conf dest=/etc/mysql/conf.d
+
+    - when: ansible_distribution == 'CentOS'
+      block:
+        - name: yum install MariaDB-client
+          yum: name={{ item }}
+          with_items:
+            - MariaDB-client
+            - MariaDB-devel
+
+        - name: cp client.cnf /etc/my.cnf.d/
+          copy: src=client.conf dest=/etc/my.cnf.d/

@@ -1,0 +1,7 @@
+# MariaDB {{ mariadb_server_version }} CentOS repository list
+# http://downloads.mariadb.org/mariadb/repositories/
+[mariadb]
+name = MariaDB
+baseurl = http://yum.mariadb.org/{{ mariadb_server_version }}/centos{{ ansible_distribution_major_version }}-amd64
+gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+gpgcheck=1

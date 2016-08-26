@@ -1,0 +1,14 @@
+---
+- tags: rsyslog
+  block:
+    - name: cp rsyslog.conf /etc/
+      copy: src={{ distribution_name_version }}/rsyslog.conf dest=/etc/
+      register: reconfigured
+
+    # We restart here instead of a handler, because we need the syslog changes
+    # to take effect immediately, instead of waiting for the end of the play to
+    # run. This makes the biggest difference when running the entire playbook
+    # for a new instance
+    - name: restart rsyslog
+      service: name=rsyslog state=restarted
+      when: reconfigured.changed

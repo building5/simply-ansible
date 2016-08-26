@@ -1,0 +1,5 @@
+---
+- when: ansible_distribution == 'Ubuntu'
+  tags: apt-get-update
+  name: apt-get update
+  apt: update_cache=yes

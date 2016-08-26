@@ -1,0 +1,9 @@
+{% if use_hosts_file_as_crappy_replacement_for_dns %}
+# What makes DNS so hard?  It's just naming things and cache invalidation ...
+# https://twitter.com/alindeman/status/741636409912623104
+{% for host in groups["all"] %}
+{% if host != inventory_hostname %} {# hosts file already has entry for self #}
+{{ hostvars[host].ansible_host }}	{{ hostvars[host].ansible_fqdn }}
+{% endif %}
+{% endfor %}
+{% endif %}

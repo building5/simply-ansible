@@ -1,0 +1,34 @@
+---
+- tags: mysql-createdb
+  block:
+    - name: "CREATE DATABASE {{ database_name }}"
+      become: False
+      delegate_to: '{{ mysql_delegate }}'
+      mysql_db:
+        state: present
+        name: '{{ database_name }}'
+        login_host: '{{ mysql_login_host }}'
+        login_user: '{{ mysql_root_user }}'
+        login_password: '{{ mysql_root_password }}'
+      register: create_db
+
+    - name: 'CREATE USER {{ user_name }}'
+      become: False
+      delegate_to: '{{ mysql_delegate }}'
+      mysql_user:
+        state: present
+        name: '{{ user_name }}'
+        password: '{{ user_password }}'
+        priv: '{{ database_name }}.*:ALL'
+        host: '%'
+        login_host: '{{ mysql_login_host }}'
+        login_user: '{{ mysql_root_user }}'
+        login_password: '{{ mysql_root_password }}'
+        append_privs: yes # user may acquire more privs in other roles
+      register: create_db_user
+
+    #
+    # Create some variables specific to this database/user
+    #
+    - set_fact: 'create_db_{{ database_name }}={{ create_db }}'
+    - set_fact: 'create_db_user_{{ user_name }}={{ create_db_user }}'

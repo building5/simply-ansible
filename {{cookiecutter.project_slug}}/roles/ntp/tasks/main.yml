@@ -1,0 +1,20 @@
+---
+- tags: ntp
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      block:
+        - name: apt-get install ntp
+          apt: name=ntp
+          notify: restart ntp (Ubuntu)
+
+        - name: service start ntp
+          service: name=ntp state=running enabled=yes
+
+    - when: ansible_distribution == 'CentOS'
+      block:
+        - name: yum install ntp
+          yum: name=ntp
+          notify: restart ntpd (CentOS)
+
+        - name: service start ntpd
+          service: name=ntpd state=running enabled=yes

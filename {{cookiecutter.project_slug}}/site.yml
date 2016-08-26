@@ -1,0 +1,99 @@
+---
+#
+# Roles to run early, since they might cause reboots, or their handlers need
+# to run before the normal roles can execute
+#
+- name: pre-roles
+  hosts: all:!unmanaged
+  tags: [initial, common]
+  # Occasionally useful, but super noisy
+  #pre_tasks:[{ debug: 'var=hostvars[inventory_hostname]', tags: debug }]
+  roles:
+    - set-distribution-name-version
+    - apt-get-update
+    - security-updates
+    - hostname
+    - timezone
+    - rsyslog
+    - users
+
+#
+# Detect is a reboot is required
+#
+- name: reboot-required
+  # reboot one host at a time, for rolling updates
+  serial: 1
+  hosts: all:!unmanaged
+  tags: [initial, common]
+  roles:
+    - reboot-required
+
+#
+# Roles to run on every instance
+#
+- name: common
+  hosts: all:!unmanaged
+  tags: common
+  roles:
+    # run cleanup as early as possible, since current roles may conflict
+    # with old stuff
+    - old-deploy-cleanup
+    - epel
+    - pip
+    - debug-tools
+    - hosts
+    - mariadb-repo
+    - mariadb-client
+    - ntp
+    - postfix
+
+#
+# New services are written in Node.js
+#
+- name: node.js
+  hosts: services
+  tags: services
+  roles:
+    - nodejs
+
+#
+# Legacy services were written in Ruby...
+#
+- name: ruby
+  hosts: legacy
+  tags: ruby
+  roles:
+    # the galaxy role is actually useful
+    - role: rvm_io.rvm1-ruby
+      # The default keys.gnupg.net keyserver is unreliable. Using the SKS
+      # keyserver pool should be better.
+      # See http://security.stackexchange.com/a/48149/5868
+      rvm1_gpg_key_server: hkp://pool.sks-keyservers.net
+      rvm1_install_flags: '--auto-dotfiles'
+      rvm1_autolib_mode: 4 # automatically install deps
+      rvm1_rubies: ['ruby-2.3.1']
+      tags: rvm
+
+#
+# Some are more legacy than others
+#
+- name: ruby
+  hosts: crazy-old
+  tags: ruby
+  roles:
+    # the galaxy role is actually useful
+    - role: rvm_io.rvm1-ruby
+      # The default keys.gnupg.net keyserver is unreliable. Using the SKS
+      # keyserver pool should be better.
+      # See http://security.stackexchange.com/a/48149/5868
+      rvm1_gpg_key_server: hkp://pool.sks-keyservers.net
+      rvm1_install_flags: '--auto-dotfiles'
+      rvm1_autolib_mode: 4 # automatically install deps
+      rvm1_rubies: ['ruby-2.1.10']
+      tags: rvm
+
+- name: mariadb
+  hosts: mariadb
+  roles:
+    - python-mysql
+    - mariadb-server

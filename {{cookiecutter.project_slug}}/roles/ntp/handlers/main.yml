@@ -1,0 +1,6 @@
+---
+- name: restart ntp (Ubuntu)
+  service: name=ntp state=restarted
+
+- name: restart ntpd (CentOS)
+  service: name=ntpd state=restarted

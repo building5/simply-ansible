@@ -1,0 +1,5 @@
+---
+- tags: hosts
+  block:
+    - name: cp hosts /etc/hosts
+      template: src={{ distribution_name_version }}/hosts.j2 dest=/etc/hosts

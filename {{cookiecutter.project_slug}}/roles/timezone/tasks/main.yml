@@ -1,0 +1,23 @@
+---
+- tags: timezone
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      name: Set timezone to UTC (Ubuntu)
+      copy: dest=/etc/timezone content="Etc/UTC\n"
+      notify:
+        - update timezone (Ubuntu)
+
+    - when: ansible_distribution == 'CentOS'
+      name: Set timezone to UTC (Ubuntu)
+      shell: |
+        set -e
+        if test $(date +%Z) != UTC; then
+          echo SETTING TIMEZONE
+          timedatectl --no-ask-password --no-pager set-timezone UTC
+        else
+          echo NO CHANGE
+        fi
+      register: tmp
+      changed_when: tmp.stdout_lines[0] == 'SETTING TIMEZONE'
+      notify:
+        - mark reboot required

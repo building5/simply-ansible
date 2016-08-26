@@ -1,0 +1,66 @@
+---
+- tags: pip
+  block:
+    - when: ansible_distribution == 'CentOS'
+      block:
+        - name: yum install <python-dev-libs>
+          yum: name={{ item }}
+          with_items:
+            - '@Development tools'
+            - python-devel
+            - libffi-devel
+            - openssl-devel
+            - libyaml-devel
+
+        - name: yum install python-pip
+          yum: name=python-pip
+
+    - when: ansible_distribution == 'Ubuntu'
+      block:
+        - name: apt-get install <python-dev-libs>
+          apt: name={{ item }}
+          with_items:
+            - build-essential
+            - python-dev
+            - libffi-dev
+            - libssl-dev
+            - libyaml-dev
+
+        - when: ansible_distribution_release != 'precise'
+          name: apt-get install pip
+          apt: name=python-pip
+
+        #
+        # On Ubuntu precise, system pip can be quite old, and not work well with
+        # newer packages. Install directly for something more reasonable.
+        #
+        - when: ansible_distribution_release == 'precise'
+          block:
+
+            #
+            # The cloud image comes with a bunch of extra python stuff
+            # installed. System images do not place nice with pip, so remove
+            # them. Not a complete list, but the things that cause trouble
+            #
+            - name: apt-get remove <python-extra-crud>
+              apt: name={{ item }} state=absent purge=yes autoremove=yes
+              with_items:
+                - python-boto
+                - python-pyasn1
+                - python-twisted*
+                - python-yaml
+
+            - name: copy get-pip.py /usr/local/src/
+              copy: src=get-pip.py dest=/usr/local/src mode=0755
+
+            - name: get-pip.py
+              shell: /usr/local/src/get-pip.py pip=={{ pip_version }}
+              register: get_pip_result
+              changed_when: 'not "Requirement already up-to-date" in get_pip_result.stdout'
+
+            #
+            # Fixes insecure platform and SNI missing warnings on older Pythons
+            # See https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+            #
+            - name: pip install urllib3[secure]
+              pip: name='urllib3[secure]'

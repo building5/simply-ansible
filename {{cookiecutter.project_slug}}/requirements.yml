@@ -1,0 +1,6 @@
+---
+#
+# Ansible Galaxy modules
+#
+- src: rvm_io.rvm1-ruby
+  version: v1.3.8

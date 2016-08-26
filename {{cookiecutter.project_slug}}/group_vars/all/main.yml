@@ -1,0 +1,6 @@
+---
+# default to direct mail delivery. if you have a relay, set it here.
+smtp_relay_host: ''
+
+# Use for NODE_ENV, RAILS_ENV, RACK_ENV, etc.
+app_env: development

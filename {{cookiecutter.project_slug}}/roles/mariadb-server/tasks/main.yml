@@ -1,0 +1,17 @@
+---
+- tags: mariadb-server
+  block:
+
+    #
+    # The MariaDB repos only contain one version, so I guess that's what we'll
+    # install
+    #
+    - name: apt-get install mariadb-server
+      apt: name=mariadb-server
+
+    - name: cp *.cnf /etc/mysql/conf.d/
+      copy: src={{ item }} dest=/etc/mysql/conf.d/
+      with_items:
+        - listen.cnf
+        - utf8.cnf
+      notify: restart mysql

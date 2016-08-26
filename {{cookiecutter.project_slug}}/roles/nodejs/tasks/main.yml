@@ -1,0 +1,31 @@
+---
+- tags: nodejs
+  block:
+    - name: wget https://deb.nodesource.com/node_{{ node_major_version }}/pool/main/n/nodejs/
+      get_url:
+        url: 'https://deb.nodesource.com/node_{{ node_major_version }}/pool/main/n/nodejs/nodejs_{{ node_version }}-1nodesource1~{{ ansible_distribution_release }}1_amd64.deb'
+        dest: /usr/local/src/nodejs.deb
+        checksum: 'sha256:{{ node_sha256 }}'
+      register: deb
+
+    - name: dpkg -i /usr/local/src/nodejs.deb
+      apt: deb=/usr/local/src/nodejs.deb
+
+    # If NodeSource ever fixes https://github.com/nodesource/distributions/issues/33
+    # then we can go back to just installing via apt, instead of manually
+    # downloading the package
+
+    #- name: apt-get install apt-transport-https
+    #  apt: name=apt-transport-https
+    #
+    #- name: apt-key nodesource
+    #  apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key id=68576280
+    #
+    #- name: apt-repository
+    #  apt_repository: repo="deb https://deb.nodesource.com/node_{{ node_major_version }} trusty main"
+    #
+    #- name: apt-get install nodejs
+    #  apt: name=nodejs={{ node_version }}
+
+    - name: npm install -g npm@{{ npm_version }}
+      npm: name=npm global=yes version={{ npm_version }}

@@ -1,0 +1,16 @@
+---
+#
+# distribution_name_version is reliably unique for distribution and version
+#
+
+- tags: always
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      name: Set distribution_name_version (Ubuntu)
+      set_fact:
+        distribution_name_version: ubuntu-{{ ansible_distribution_release }}
+
+    - when: ansible_distribution == 'CentOS'
+      name: Set distribution_name_version (Centos)
+      set_fact:
+        distribution_name_version: centos-{{ ansible_distribution_major_version }}

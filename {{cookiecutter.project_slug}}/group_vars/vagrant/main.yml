@@ -1,0 +1,5 @@
+---
+dns_domain: '{{ cookiecutter.project_slug }}.test' # Must match what's in Vagrantfile
+
+# Vagrant plugins to get DNS working do not work well
+use_hosts_file_as_crappy_replacement_for_dns: true

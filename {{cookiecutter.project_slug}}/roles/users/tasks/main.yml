@@ -1,0 +1,41 @@
+---
+- tags: users
+  block:
+    - name: groupadd --system sudo
+      group: name=sudo system=yes
+
+    - name: Disable sudo passwords
+      copy:
+        dest: /etc/sudoers.d/nopasswd
+        content: |
+          %sudo ALL=(ALL) NOPASSWD:ALL
+        mode: 0440
+        validate: visudo -cf %s
+
+    # User list can be used by other roles; always build it
+    - name: build user list
+      become: False
+      run_once: True
+      local_action: command echo "{{ item | basename | replace('.pub', '') }}"
+      with_fileglob:
+        - "*.pub"
+      register: users
+      changed_when: False
+      tags: always
+
+    # now make user list friendly
+    - name: set_fact users
+      set_fact:
+        users: "{{ users.results|map(attribute='stdout')|list }}"
+      tags: always
+
+    - name: useradd <users>
+      user: name="{{ item }}" groups=sudo append=yes shell=/bin/bash
+      with_items: '{{ users }}'
+
+
+    - name: Ensure public key is in authorized_keys
+      authorized_key:
+        key: "{{ lookup('file',item + '.pub') }}"
+        user: "{{ item }}"
+      with_items: '{{ users }}'

@@ -1,0 +1,11 @@
+---
+#
+# After being merged to master, and deployed to all the existing instances,
+# these tasks can be removed.
+#
+
+- tags: old-deploy-cleanup
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      name: apt-get autoremove --purge
+      apt: autoremove=yes purge=yes name=stupid-package-that-does-not-exist state=absent

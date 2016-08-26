@@ -1,0 +1,22 @@
+---
+- tags: security-updates
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      block:
+        - name: apt-get install unattended-upgrades
+          apt: name=unattended-upgrades
+
+        - name: Install security updates (old Ubuntu)
+          command: unattended-upgrades
+          when: ansible_distribution_release == 'precise'
+
+        - name: Install security updates (Ubuntu)
+          command: unattended-upgrades --verbose
+          when: ansible_distribution_release != 'precise'
+
+    - when: ansible_distribution == 'CentOS'
+      block:
+        - name: Install security updates (CentOS)
+          command: yum upgrade --security --quiet
+          args:
+            warn: no # Ansible's yum module doesn't have a --security option

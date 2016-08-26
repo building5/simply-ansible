@@ -1,0 +1,22 @@
+---
+# installing pinned version from archive site took nearly an hour :-(
+# DigitalOcean mirror of latest 5.5 took < 2 minutes. I guess we're installing
+# the latest 5.5, then.
+
+- tags: mariadb-repo
+  block:
+    - when: ansible_distribution == 'Ubuntu'
+      block:
+        - name: apt-key
+          apt_key: keyserver=keyserver.ubuntu.com id={{ item }}
+          with_items:
+            - '0xF1656F24C74CD1D8' # newer signing key
+            - '0xcbcb082a1bb943db' # older signing key; still in use
+
+        - name: apt-add-repository mariadb-server
+          apt_repository: repo='deb [arch=amd64,i386] http://nyc2.mirrors.digitalocean.com/mariadb/repo/{{ mariadb_server_version }}/ubuntu {{ ansible_distribution_release }} main'
+
+    - when: ansible_distribution == 'CentOS'
+      block:
+        - name: cp MariaDB.repo /etc/yum.repos.d/
+          template: src=centos/MariaDB.repo.j2 dest=/etc/yum.repos.d/MariaDB.repo

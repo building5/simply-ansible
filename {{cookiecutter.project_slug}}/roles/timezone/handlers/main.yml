@@ -1,0 +1,12 @@
+---
+- name: update timezone (Ubuntu)
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+  notify: mark reboot required
+
+#
+# Once a process learns what timezone it is in, it usually caches it forever.
+# When updating the timezone, it's usually best to just reboot to make sure
+# everything picks up the change.
+#
+- name: mark reboot required
+  file: state=touch path=/var/run/reboot-required
