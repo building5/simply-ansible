@@ -12,12 +12,6 @@
 
 ---
 
-# Fair warning: I might be wrong
-
-![no-idea](./images/no-idea.jpg)
-
----
-
 # `new Ansible()`
 
 > Ansible is an IT automation tool. It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates.
@@ -155,12 +149,13 @@ A task specifies a module and the parameters to invoke it with.
 ```yaml
 - name: perform an action
   # args can be name=value
-  some_module: some_param=some-value
+  copy: src=blink.conf dest=/etc/angels
 
 - name: perform another action
   # or args can be an object
-  some_module:
-    some_param: some-value
+  copy:
+    src: blink.conf
+    dest: /etc/angels
 ```
 
 ---
@@ -304,7 +299,7 @@ A role may be parameterized, meaning that it expects certain variables to be set
 # run entire playbook on single machine
 $ ansible-playbook site.yml --limit some-new-machine
 
-# run everything tagged with sontaran on all machines
+# run everything task tagged with sontaran
 $ ansible-playbook site.yml --tags sontaran
 
 # run sil and ood on the webservers not in San Diego
