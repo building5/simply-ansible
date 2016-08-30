@@ -180,8 +180,7 @@ roles:
 Meta declares dependencies between roles, which seems nice.
 
 But...
- * Dependencies are executed in every play they are refernced from
-   * Which means they probably get executed multiple times
+ * Dependencies are executed in every play they are referenced from, which means they probably get executed multiple times
  * Plays/roles execute in order, so you can just put the dependency earlier in the list
 
 ```yaml
@@ -206,7 +205,7 @@ Roles give you two places to define variables. They only differ in precedence, a
 roles/
    some-role/
      defaults/
-       main.yml # Good play for role's variables
+       main.yml # Good place for role's variables
      vars/
        main.yml # Confusing place for role's variables
 ```
