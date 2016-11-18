@@ -132,7 +132,7 @@ app_env: development
 
 # Modules
 
-Modules are the programs that Ansible executes directly on remote hosts.
+Programs that Ansible executes directly on remote hosts.
 
  * Ansible ships with >600 modules.
  * [Custom modules](http://docs.ansible.com/ansible/developing_modules.html) can be loaded in the `./library` directory.
@@ -165,12 +165,13 @@ A task specifies a module and the parameters to invoke it with.
 A block can used anywhere you can use a task. It allows you to more easily apply settings to a group of tasks. It also adds `rescue` blocks for error handling. New in Ansible 2.x.
 
 ```yaml
-- when: some_var == 'some-val'
+- when: doctor == 10
   block:
-   - name: conditionally do a thing
-     action: some_param=some-value
-   - name: conditionally do another thing
-     another_action: some_param=some-value
+   - name: Copy rose.conf to /etc/doctor/companions.d/
+     copy: src=rose.conf dest=/etc/doctor/companions.d/
+   - name: Set catchphrase to allons-y
+     copy: src=allons-y.conf dest=/etc/doctor/catchphrase.conf
+     
 ```
 
 ---
@@ -220,12 +221,12 @@ A playbook is a list of plays, which are executed sequentially, in order.
 ```yaml
 # ./site.yml
 ---
-- name: Some play
+- name: First play
   hosts: some-hosts
   roles:
    - some-role
 
-- name: Some other play
+- name: Second play
   # ...
 ```
 
@@ -244,6 +245,14 @@ A playbook is a list of plays, which are executed sequentially, in order.
     #           usually necessary to
     #           avoid yaml/j2 confusion
 ```
+
+---
+
+## Custom Jinja2 filters
+
+In addition to the standard Jinja2 filters, Ansible defines a [number of custom filters](https://docs.ansible.com/ansible/playbooks_filters.html).
+
+![custom filters](./images/custom-filters.png)
 
 ---
 
@@ -297,7 +306,7 @@ A role may be parameterized, meaning that it expects certain variables to be set
 
 ```bash
 # run entire playbook on single machine
-$ ansible-playbook site.yml --limit some-new-machine
+$ ansible-playbook site.yml --limit strax
 
 # run everything task tagged with sontaran
 $ ansible-playbook site.yml --tags sontaran
