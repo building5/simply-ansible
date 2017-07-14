@@ -105,39 +105,39 @@ I usually have a rule with a bunch of one-line installers for things that are ge
 
 ## Avoid repeating roles...
 
-Here both `foo` and `bar` need `zygon`. Since plays are sequential, `zygon` will be installed in sequence. Can really slow down the playbook.
+Here both `webservers` and `db` need `zygon`. Since plays are sequential, `zygon` will be installed in sequence. Can really slow down the playbook.
 
 ```yaml
-- hosts: foo
+- hosts: webservers
   roles:
    - zygon # Bad!
-   - foo
+   - nginx
 
-- hosts: bar
+- hosts: db
   roles:
    - zygon # Bad!
-   - bar
+   - postgresql
 ```
 
 ---
 
 ## i.e., consolidate roles to get parallelism
 
-Since the `zygon` role is in a single play, it will execute in parallel on both `foo` and `bar`. You can't always do this, but when you can, it helps tremendously.
+Since the `zygon` role is in a single play, it will execute in parallel on both `webserver` and `db`. You can't always do this, but when you can, it helps tremendously.
 
 ```yaml
-- hosts: foo,bar # both foo and bar groups
+- hosts: webserver,db # both webserver and db groups
   roles:
    - zygon    # installs in parallel
-              # across foo & bar nodes
+              # across webserver & db nodes
 
-- hosts: foo
+- hosts: webserver
   roles:
-   - foo
+   - nginx
 
-- hosts: bar
+- hosts: db
   roles:
-   - bar
+   - postgresql
 ```
 
 ---
@@ -160,17 +160,6 @@ Since roles are small and single purpose, you're usually debugging individual ro
 
 ```bash
 $ ansible-playbook site.yml --tags zygon
-```
-
----
-
-## Role tagging in Ansible 1.9
-
-Before Ansible 2.x, the best way to tag an entire role was to put the tag in the playbook. Either way is fine.
-
-```yaml
-roles:
- - { role: zygon, tags: zygon } # Ansible 1.9 syntax
 ```
 
 ---
@@ -315,9 +304,9 @@ pipelining = True
 
 ---
 
-## Handlers are not idempotent!
+## Set force_handlers = True in ansible.cfg
 
-...but often necessary. Just be aware of this when a playbook fails.
+*New*: By default, a failure in a playbook causes handlers to be skipped. This causes the handlers to not run idempotently, and cause strange behaviors when re-running playbooks after errors.
 
 ```yaml
 # ./site.yml
@@ -332,8 +321,7 @@ pipelining = True
 # ./roles/cyberman/tasks/main.yml
 - fail: msg="***HEAD EXPLODES***"
   # ^^ causes play to fail before restart master
-  # even if you fix and re-run, file already copied
-  # so it won't notify on re-run
+  # w/o force_handlers = True, this would be skipped
 ```
 
 ---
@@ -415,6 +403,17 @@ test: virtualenv galaxy
  * Peer review changes before going live
  * Use continuous deployment/continous delivery/ChatOps
  * Testing!
+
+---
+
+## Old advice
+
+ * OLD: Avoiding handles
+   * I used to code my playbooks w/o handlers, so errors wouldn't skip them
+   * NEW: Set `force_handlers = True` in `ansible.cfg`
+ * OLD: Tag the roles in the playbook (`{ role: zygon, tags: zygon }`)
+   * This was before blocks existed
+   * NEW: Define a top-level block in the role and put the tag there
 
 ---
 

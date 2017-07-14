@@ -171,7 +171,7 @@ A block can used anywhere you can use a task. It allows you to more easily apply
      copy: src=rose.conf dest=/etc/doctor/companions.d/
    - name: Set catchphrase to allons-y
      copy: src=allons-y.conf dest=/etc/doctor/catchphrase.conf
-     
+
 ```
 
 ---
@@ -263,14 +263,14 @@ Handlers allow you to perform actions on change.
  * If handler isn't notified, it isn't run
  * If it's notified multiple times, it only runs once
  * When run, handlers run at the end of the play
- * **Caution**: Do not overuse
-   * Errors between notify and end of play cause handlers to be skipped
+ * **Caution**: Be sure to set `force_handlers = true` in `ansible.cfg`
+   * Otherwise errors between notify and end of play cause handlers to be skipped
 
 ```yaml
 # ./some-role/tasks/main.yml
 - copy: src=missy.conf dest=/etc/master
   notify: restart master
-  
+
 # ./some-role/handlers/main.yml
 - name: restart master
   service: name=master state=restarted
@@ -388,7 +388,7 @@ On tasks, block, roles or plays, you can add a `when` clause to conditionally do
   apt: name=postfix
 
 - when: ansible_distribution == 'CentOS'
-  yum: name=postfix  
+  yum: name=postfix
 ```
 
 ---
